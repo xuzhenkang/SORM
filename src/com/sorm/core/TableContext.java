@@ -10,6 +10,7 @@ import java.util.Map;
 
 import com.sorm.bean.ColumnInfo;
 import com.sorm.bean.TableInfo;
+import com.sorm.utils.JavaFileUtils;
 
 /**
  * 负责获取管理数据库所有表结构和类结构的关系，并可以根据表结构生成类结构。
@@ -63,10 +64,18 @@ public class TableContext {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		
+		updateJavaPoFile();
 	}
-	public static void main(String[] args) {
+	
+	public static void updateJavaPoFile() {
 		for (TableInfo tableInfo : TableContext.tables.values()) {
-			System.out.println(tableInfo.gettName());
+			JavaFileUtils.createJavaPoFile(tableInfo, new MySqlTypeConvertor());
 		}
+	}
+	
+	
+	public static void main(String[] args) {
+		
 	}
 }
