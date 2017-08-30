@@ -11,6 +11,7 @@ import java.util.Map;
 import com.sorm.bean.ColumnInfo;
 import com.sorm.bean.TableInfo;
 import com.sorm.utils.JavaFileUtils;
+import com.sorm.utils.StringUtils;
 
 /**
  * 负责获取管理数据库所有表结构和类结构的关系，并可以根据表结构生成类结构。
@@ -42,17 +43,20 @@ public class TableContext {
 			while (tableRet.next()) {
 				String tableName = (String) tableRet.getObject("TABLE_NAME");
 
-				TableInfo tableInfo = new TableInfo(tableName, new HashMap<String, ColumnInfo>(), new ArrayList<ColumnInfo>());
+				TableInfo tableInfo = new TableInfo(tableName, new HashMap<String, ColumnInfo>(),
+						new ArrayList<ColumnInfo>());
 				tables.put(tableName, tableInfo);
 
 				ResultSet columnSet = dbmd.getColumns(null, "%", tableName, "%"); // 查询表中的所有字段
 				while (columnSet.next()) {
-					ColumnInfo columnInfo = new ColumnInfo(columnSet.getString("COLUMN_NAME"), columnSet.getString("TYPE_NAME"), 0);
+					ColumnInfo columnInfo = new ColumnInfo(columnSet.getString("COLUMN_NAME"),
+							columnSet.getString("TYPE_NAME"), 0);
 					tableInfo.getColumns().put(columnSet.getString("COLUMN_NAME"), columnInfo);
 				}
 				ResultSet primaryKeySet = dbmd.getPrimaryKeys(null, "%", tableName); // 查询t_user表中的主键
 				while (primaryKeySet.next()) {
-					ColumnInfo columnInfo = (ColumnInfo) tableInfo.getColumns().get(primaryKeySet.getObject("COLUMN_NAME"));
+					ColumnInfo columnInfo = (ColumnInfo) tableInfo.getColumns()
+							.get(primaryKeySet.getObject("COLUMN_NAME"));
 					columnInfo.setKeyType(1); // 设置为主键类型
 					tableInfo.getPriKeys().add(columnInfo);
 				}
@@ -64,18 +68,32 @@ public class TableContext {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
 		updateJavaPoFile();
+		loadPOTables();
 	}
-	
+
 	public static void updateJavaPoFile() {
 		for (TableInfo tableInfo : TableContext.tables.values()) {
 			JavaFileUtils.createJavaPoFile(tableInfo, new MySqlTypeConvertor());
 		}
 	}
-	
-	
+
+	public static void loadPOTables() {
+		for (TableInfo tableInfo : tables.values()) {
+			try {
+				Class c = Class.forName(DBManager.getConf().getPoPackage() + "."
+						+ StringUtils.firstChar2UpperCase(tableInfo.gettName()));
+				poClassTableMap.put(c, tableInfo);
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+	}
+
 	public static void main(String[] args) {
-		
+
 	}
 }
