@@ -24,7 +24,6 @@ public class MySqlQuery implements Query {
 
 	@Override
 	public void delete(Object obj) {
-		// TODO Auto-generated method stub
 		
 	}
 
